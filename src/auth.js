@@ -10,10 +10,12 @@ export function createAuthController(supabaseClient, onSessionChanged) {
         const {
             data: { session }
         } = await supabaseClient.auth.getSession();
-        onSessionChanged(session?.user || null);
+        await onSessionChanged(session?.user || null);
 
         const { data: authListener } = supabaseClient.auth.onAuthStateChange((_event, nextSession) => {
-            onSessionChanged(nextSession?.user || null);
+            Promise.resolve(onSessionChanged(nextSession?.user || null)).catch((error) => {
+                console.error("Falha ao processar mudanca de sessao.", error);
+            });
         });
 
         unsubscribeListener = authListener?.subscription || null;

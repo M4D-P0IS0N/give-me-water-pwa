@@ -18,6 +18,23 @@ export function bindUiEvents({
     listenServiceWorkerMessages,
     getServiceWorkerRegistration
 }) {
+    async function triggerEmailSignIn(emailInputElement, statusOutputElement) {
+        const authController = getAuthController();
+        if (!authController) {
+            if (statusOutputElement) {
+                statusOutputElement.textContent = "Supabase nao configurado.";
+            }
+            domRefs.syncStatus.textContent = "Supabase nao configurado.";
+            return;
+        }
+
+        const result = await authController.signInWithEmail(emailInputElement?.value || "");
+        if (statusOutputElement) {
+            statusOutputElement.textContent = result.message;
+        }
+        domRefs.syncStatus.textContent = result.message;
+    }
+
     domRefs.onboardingForm.addEventListener("submit", async (submitEvent) => {
         submitEvent.preventDefault();
         const onboardingData = readOnboardingFormData();
@@ -35,6 +52,10 @@ export function bindUiEvents({
         if (getAppState().settings.notificationsEnabled) {
             await requestNotificationPermission();
         }
+    });
+
+    domRefs.controls.onboardingSignIn?.addEventListener("click", async () => {
+        await triggerEmailSignIn(domRefs.onboardingAuthEmailInput, domRefs.onboardingAuthStatus);
     });
 
     domRefs.controls.openSettings.addEventListener("click", () => {
@@ -80,14 +101,7 @@ export function bindUiEvents({
     });
 
     domRefs.controls.signIn.addEventListener("click", async () => {
-        const authController = getAuthController();
-        if (!authController) {
-            domRefs.syncStatus.textContent = "Supabase nao configurado.";
-            return;
-        }
-
-        const result = await authController.signInWithEmail(domRefs.authEmailInput.value);
-        domRefs.syncStatus.textContent = result.message;
+        await triggerEmailSignIn(domRefs.authEmailInput);
     });
 
     domRefs.controls.signOut.addEventListener("click", async () => {

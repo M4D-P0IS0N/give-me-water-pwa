@@ -7,6 +7,8 @@ export function getDomRefs() {
             analytics: document.getElementById("analytics")
         },
         onboardingForm: document.getElementById("onboarding-form"),
+        onboardingAuthEmailInput: document.getElementById("onboarding-auth-email"),
+        onboardingAuthStatus: document.getElementById("onboarding-auth-status"),
         currentIntake: document.getElementById("current-intake"),
         goalIntake: document.getElementById("goal-intake"),
         dehydrationAlert: document.getElementById("dehydration-alert"),
@@ -33,6 +35,7 @@ export function getDomRefs() {
             openAnalytics: document.getElementById("btn-analytics"),
             backAnalytics: document.getElementById("btn-back-analytics"),
             requestNotificationPermission: document.getElementById("btn-notification-permission"),
+            onboardingSignIn: document.getElementById("btn-onboarding-sign-in"),
             resetData: document.getElementById("btn-reset-data"),
             signIn: document.getElementById("btn-sign-in"),
             signOut: document.getElementById("btn-sign-out")

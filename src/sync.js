@@ -110,6 +110,20 @@ function monthlySummaryToDatabaseRow(summaryItem, userId) {
     };
 }
 
+function buildProfileUpsertPayload(stateObject) {
+    const deviceTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+    return {
+        user_id: stateObject.sync.userId,
+        timezone: deviceTimezone,
+        settings_json: {
+            profile: stateObject.profile || null,
+            goal: Number(stateObject.goal || 0),
+            settings: stateObject.settings || {}
+        },
+        updated_at: new Date().toISOString()
+    };
+}
+
 export function createSyncEngine(getState, setState, mergeRemoteEvents) {
     let supabaseClient = null;
     let realtimeChannel = null;
@@ -291,6 +305,66 @@ export function createSyncEngine(getState, setState, mergeRemoteEvents) {
         updateSyncStatus({ lastSyncedAt: new Date().toISOString() });
     }
 
+    async function pullCloudProfile() {
+        if (!supabaseClient || !getState().sync.userId) {
+            return false;
+        }
+
+        const userId = getState().sync.userId;
+        const { data: profileRow, error: profileError } = await supabaseClient
+            .from("profiles")
+            .select("*")
+            .eq("user_id", userId)
+            .maybeSingle();
+
+        if (profileError) {
+            console.error("Erro ao puxar perfil da nuvem.", profileError);
+            return false;
+        }
+
+        if (!profileRow) {
+            return false;
+        }
+
+        const profilePayload = profileRow.settings_json || {};
+        const nextProfile = profilePayload.profile || null;
+        const nextGoal = Number(profilePayload.goal || 0);
+        const nextSettings = profilePayload.settings && typeof profilePayload.settings === "object"
+            ? profilePayload.settings
+            : {};
+
+        const currentState = getState();
+        setState({
+            ...currentState,
+            profile: nextProfile,
+            goal: nextGoal > 0 ? nextGoal : currentState.goal,
+            settings: {
+                ...currentState.settings,
+                ...nextSettings
+            }
+        });
+        return true;
+    }
+
+    async function syncProfileAndSettings() {
+        const state = getState();
+        if (!supabaseClient || !state.sync.userId) {
+            return;
+        }
+
+        const payload = buildProfileUpsertPayload(state);
+        const { error } = await supabaseClient
+            .from("profiles")
+            .upsert(payload, { onConflict: "user_id" });
+
+        if (error) {
+            console.error("Erro ao sincronizar perfil/configuracoes.", error);
+            return;
+        }
+
+        updateSyncStatus({ lastSyncedAt: new Date().toISOString() });
+    }
+
     async function setSupabaseClient(clientInstance) {
         supabaseClient = clientInstance;
         await refreshPendingCount();
@@ -301,9 +375,22 @@ export function createSyncEngine(getState, setState, mergeRemoteEvents) {
             userId: userSession?.id || null,
             email: userSession?.email || null
         });
+
+        if (!userSession) {
+            if (realtimeChannel && supabaseClient) {
+                await supabaseClient.removeChannel(realtimeChannel);
+                realtimeChannel = null;
+            }
+            return;
+        }
+
         await attachRealtime();
+        const hasCloudProfile = await pullCloudProfile();
         await pullCloudSnapshot();
         await flushQueue();
+        if (!hasCloudProfile) {
+            await syncProfileAndSettings();
+        }
         await syncMonthlySummariesAndPruneCloud();
     }
 
@@ -312,16 +399,19 @@ export function createSyncEngine(getState, setState, mergeRemoteEvents) {
         if (supabaseClient && state.sync.userId) {
             const userId = state.sync.userId;
             const [
+                deleteProfilesResponse,
                 deleteEventsResponse,
                 deleteSummariesResponse,
                 deletePushSubscriptionsResponse
             ] = await Promise.all([
+                supabaseClient.from("profiles").delete().eq("user_id", userId),
                 supabaseClient.from("hydration_events").delete().eq("user_id", userId),
                 supabaseClient.from("monthly_summaries").delete().eq("user_id", userId),
                 supabaseClient.from("push_subscriptions").delete().eq("user_id", userId)
             ]);
 
             const cloudErrors = [
+                deleteProfilesResponse.error,
                 deleteEventsResponse.error,
                 deleteSummariesResponse.error,
                 deletePushSubscriptionsResponse.error
@@ -344,6 +434,7 @@ export function createSyncEngine(getState, setState, mergeRemoteEvents) {
         flushQueue,
         pullCloudSnapshot,
         syncMonthlySummariesAndPruneCloud,
+        syncProfileAndSettings,
         resetUserData
     };
 }

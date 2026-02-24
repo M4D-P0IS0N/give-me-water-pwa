@@ -28,6 +28,14 @@ PWA de hidratacao com:
 
 Com `url`/`anonKey` vazios em `src/config.js`, o app continua em modo local-only.
 
+## Onboarding e sincronizacao entre dispositivos
+- Em dispositivo novo, voce pode clicar em `Entrar e puxar dados da nuvem` no onboarding.
+- Apos login por email, o app puxa automaticamente:
+  - meta (`goal`)
+  - perfil do onboarding
+  - configuracoes principais
+- Se dados existirem na nuvem, o app sai do onboarding e abre o dashboard automaticamente.
+
 ## Normalizacao de assets do mascote
 1. Execute:
 ```powershell

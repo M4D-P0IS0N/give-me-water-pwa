@@ -48,12 +48,22 @@ let authController = null;
 let runtimeConfig = null;
 let retentionSyncTimerId = null;
 let lastMonthlySummarySignature = "";
+let profileSyncTimerId = null;
+let lastProfileSettingsSignature = "";
 
 function getMonthlySummarySignature(stateObject) {
     return (stateObject.monthlySummaries || [])
         .map((summaryItem) => summaryItem.monthKey)
         .sort()
         .join("|");
+}
+
+function getProfileSettingsSignature(stateObject) {
+    return JSON.stringify({
+        profile: stateObject.profile || null,
+        goal: Number(stateObject.goal || 0),
+        settings: stateObject.settings || {}
+    });
 }
 
 function scheduleMonthlyRetentionSync() {
@@ -70,6 +80,20 @@ function scheduleMonthlyRetentionSync() {
     }, 400);
 }
 
+function scheduleProfileSync() {
+    if (profileSyncTimerId) {
+        window.clearTimeout(profileSyncTimerId);
+    }
+
+    profileSyncTimerId = window.setTimeout(async () => {
+        try {
+            await syncEngine.syncProfileAndSettings();
+        } catch (error) {
+            console.error("Falha ao sincronizar perfil/configuracoes na nuvem.", error);
+        }
+    }, 450);
+}
+
 function applyState(nextState, shouldRender = true) {
     appState = runMonthlyRetention(ensureDailyState(nextState));
     saveState(appState);
@@ -77,6 +101,11 @@ function applyState(nextState, shouldRender = true) {
     if (nextSignature !== lastMonthlySummarySignature) {
         lastMonthlySummarySignature = nextSignature;
         scheduleMonthlyRetentionSync();
+    }
+    const nextProfileSignature = getProfileSettingsSignature(appState);
+    if (nextProfileSignature !== lastProfileSettingsSignature) {
+        lastProfileSettingsSignature = nextProfileSignature;
+        scheduleProfileSync();
     }
     if (shouldRender) {
         renderApplication();
@@ -277,7 +306,12 @@ async function bootstrapApplication() {
         getSupabaseClient,
         getSupabaseRuntimeConfig,
         syncEngine,
-        onUserChanged: () => applyState({ ...appState }),
+        onUserChanged: () => {
+            applyState({ ...appState });
+            if (appState.goal > 0) {
+                showScreen(domRefs, "dashboard");
+            }
+        },
         onSyncPushNeeded: syncPushSubscriptionState
     });
     authController = authSetup.authController;
