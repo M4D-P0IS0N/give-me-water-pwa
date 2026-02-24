@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Give Me Water</title>
+    <meta name="theme-color" content="#dc8a78">
+    <link rel="manifest" href="./manifest.json">
+    <link rel="icon" type="image/png" href="./icon-192.png">
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+    <div id="app-shell">
+        <section id="onboarding" class="screen hidden" aria-labelledby="onboarding-title">
+            <header class="screen-header">
+                <h1 id="onboarding-title">Configurar Meta Diaria</h1>
+                <p class="subtitle">Informe os dados para calcular sua meta de hidratacao.</p>
+            </header>
+            <form id="onboarding-form" class="glass-card form-card">
+                <div class="input-group">
+                    <label for="gender">Genero</label>
+                    <select id="gender" required>
+                        <option value="male">Masculino</option>
+                        <option value="female">Feminino</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="weight">Peso (kg)</label>
+                    <input type="number" id="weight" min="20" max="300" step="0.1" required>
+                </div>
+                <div class="input-group">
+                    <label for="height">Altura (cm)</label>
+                    <input type="number" id="height" min="100" max="250" step="1" required>
+                </div>
+                <div class="input-group">
+                    <label for="activity">Nivel de Atividade</label>
+                    <select id="activity" required>
+                        <option value="1">Baixa</option>
+                        <option value="1.2">Media</option>
+                        <option value="1.4">Alta</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="climate">Clima</label>
+                    <select id="climate" required>
+                        <option value="0.9">Frio</option>
+                        <option value="1">Temperado</option>
+                        <option value="1.1">Morno</option>
+                        <option value="1.3">Quente</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Calcular Meta</button>
+            </form>
+        </section>
+
+        <section id="dashboard" class="screen hidden" aria-labelledby="dashboard-title">
+            <header class="screen-header dashboard-header">
+                <h2 id="dashboard-title">Progresso de Hoje</h2>
+                <div class="header-actions">
+                    <button type="button" id="btn-analytics" class="icon-btn" aria-label="Abrir analytics">📈</button>
+                    <button type="button" id="btn-settings" class="icon-btn" aria-label="Abrir configuracoes">⚙</button>
+                </div>
+            </header>
+
+            <article class="glass-card mascot-card">
+                <div class="mascot-stage" aria-live="polite">
+                    <div class="mascot-panel mascot-panel-oil">
+                        <div id="mascot-oil-ring" class="mascot-oil-ring" role="presentation" aria-hidden="true">
+                            <div class="mascot-oil-ring-inner">
+                                <img id="mascot-oil" class="mascot-layer mascot-oil" src="./Imagens/Oleo/oleo_0.png" alt="Nivel do galao de oleo">
+                            </div>
+                        </div>
+                    </div>
+                    <div id="mascot-robot-panel" class="mascot-panel mascot-panel-robot">
+                        <div id="mascot-power-aura" class="mascot-power-aura hidden" aria-hidden="true"></div>
+                        <div id="mascot-power-lightning" class="mascot-power-lightning hidden" aria-hidden="true"></div>
+                        <div id="mascot-power-sparkles" class="mascot-power-sparkles hidden" aria-hidden="true"></div>
+                        <div id="mascot-robot-shell" class="mascot-robot-shell">
+                            <img id="mascot-robot" class="mascot-layer mascot-robot" src="./Imagens/Robo/robo_0.png" alt="Mascote robo">
+                        </div>
+                    </div>
+                </div>
+                <p class="progress-text">
+                    <span id="current-intake">0</span>
+                    <span class="muted">/</span>
+                    <span id="goal-intake">0</span>
+                    <span class="muted">ml</span>
+                </p>
+                <p id="dehydration-alert" class="alert hidden" role="alert"></p>
+            </article>
+
+            <article class="glass-card">
+                <h3 class="card-title">Adicionar Bebida</h3>
+                <div id="drink-types-container" class="grid-container"></div>
+                <div id="drink-amounts-container" class="grid-container amounts-grid"></div>
+            </article>
+
+            <article class="glass-card">
+                <h3 class="card-title">Historico de Hoje</h3>
+                <ul id="history-list" class="history-list"></ul>
+            </article>
+        </section>
+
+        <section id="settings" class="screen hidden" aria-labelledby="settings-title">
+            <header class="screen-header">
+                <h2 id="settings-title">Configuracoes</h2>
+                <button type="button" id="btn-back-settings" class="btn btn-secondary">Voltar</button>
+            </header>
+
+            <div class="glass-card form-card">
+                <div class="input-group">
+                    <label for="meta-override">Meta Manual (ml)</label>
+                    <input type="number" id="meta-override" min="250" step="50">
+                </div>
+                <div class="input-group">
+                    <label for="end-of-day">Horario de fim do dia</label>
+                    <input type="time" id="end-of-day">
+                </div>
+                <div class="input-group">
+                    <label for="start-of-week">Inicio da semana</label>
+                    <select id="start-of-week">
+                        <option value="0">Domingo</option>
+                        <option value="1">Segunda-feira</option>
+                    </select>
+                </div>
+
+                <hr class="separator">
+
+                <div class="input-group inline">
+                    <label for="notifications-enabled">Lembretes de hidratacao</label>
+                    <input type="checkbox" id="notifications-enabled">
+                </div>
+                <div class="input-group">
+                    <label for="reminder-start">Inicio dos lembretes</label>
+                    <input type="time" id="reminder-start">
+                </div>
+                <div class="input-group">
+                    <label for="reminder-end">Fim dos lembretes</label>
+                    <input type="time" id="reminder-end">
+                </div>
+                <div class="input-group">
+                    <label for="reminder-interval">Intervalo (minutos)</label>
+                    <input type="number" id="reminder-interval" min="30" step="30">
+                </div>
+                <p id="notification-permission-help" class="status-text">
+                    Permite que o navegador envie lembretes mesmo com o app em segundo plano.
+                </p>
+                <button type="button" id="btn-notification-permission" class="btn btn-secondary">Ativar notificacoes do navegador</button>
+
+                <hr class="separator">
+
+                <div id="auth-anon-section">
+                    <div class="input-group">
+                        <label for="auth-email">Sincronizacao (email)</label>
+                        <input type="email" id="auth-email" placeholder="voce@exemplo.com">
+                    </div>
+                    <div class="button-row auth-single-action">
+                        <button type="button" id="btn-sign-in" class="btn btn-primary">Entrar e sincronizar</button>
+                    </div>
+                </div>
+
+                <div id="auth-connected-section" class="hidden">
+                    <p id="auth-connected-message" class="status-text auth-connected-message"></p>
+                    <div class="button-row auth-single-action">
+                        <button type="button" id="btn-sign-out" class="btn btn-secondary">Desconectar conta</button>
+                    </div>
+                </div>
+                <p id="sync-status" class="status-text">Sync: local only</p>
+                <p id="auth-status" class="status-text">Usuario: anonimo</p>
+
+                <button type="button" id="btn-reset-data" class="btn btn-danger">Resetar dados e recomecar</button>
+                <button type="button" id="btn-recalculate" class="btn btn-secondary">Refazer Onboarding</button>
+            </div>
+        </section>
+
+        <section id="analytics" class="screen hidden" aria-labelledby="analytics-title">
+            <header class="screen-header">
+                <h2 id="analytics-title">Historico</h2>
+                <button type="button" id="btn-back-analytics" class="btn btn-secondary">Voltar</button>
+            </header>
+
+            <article class="glass-card">
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <p class="stat-label">Media da Semana</p>
+                        <p class="stat-value" id="stat-avg-intake">0ml</p>
+                    </div>
+                    <div class="stat-box">
+                        <p class="stat-label">Metas da Semana</p>
+                        <p class="stat-value" id="stat-completion">0%</p>
+                    </div>
+                </div>
+
+                <h3 class="card-title">Semana Atual</h3>
+                <div id="weekly-chart" class="weekly-chart"></div>
+
+                <h3 class="card-title">Mes Atual</h3>
+                <div class="monthly-chart-container">
+                    <svg id="monthly-chart" preserveAspectRatio="xMidYMid meet"></svg>
+                </div>
+            </article>
+        </section>
+    </div>
+
+    <aside id="quick-add-sheet" class="quick-add hidden" aria-label="Adicionar agua rapido">
+        <div class="quick-add-card glass-card">
+            <h3>Adicionar Agua Rapido</h3>
+            <div class="button-row">
+                <button type="button" class="btn btn-primary quick-add-btn" data-amount="250">+250ml</button>
+                <button type="button" class="btn btn-primary quick-add-btn" data-amount="500">+500ml</button>
+                <button type="button" class="btn btn-primary quick-add-btn" data-amount="750">+750ml</button>
+            </div>
+            <button type="button" id="btn-close-quick-add" class="btn btn-secondary">Fechar</button>
+        </div>
+    </aside>
+
+    <script type="module" src="./src/main.js"></script>
+</body>
+</html>
