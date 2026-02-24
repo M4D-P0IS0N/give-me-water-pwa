@@ -715,7 +715,16 @@ input[type="checkbox"] {
     }
 
     .mascot-oil-ring {
-        width: min(100%, 136px);
+        width: min(100%, 154px);
+    }
+
+    .mascot-oil-ring-inner {
+        padding: 4px 8px 6px;
+    }
+
+    .mascot-oil {
+        width: min(100%, 126px);
+        height: 94%;
     }
 }
 

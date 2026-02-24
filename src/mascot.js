@@ -129,9 +129,11 @@ function initializePowerEffects(domRefs) {
 
 function applyLayerLayout(robotImageElement, oilImageElement, mascotLevel) {
     const layoutConfig = LAYER_LAYOUT_BY_LEVEL[mascotLevel] || LAYER_LAYOUT_BY_LEVEL[25];
+    const isSmallViewport = window.matchMedia("(max-width: 480px)").matches;
+    const oilScaleBoost = isSmallViewport ? 1.35 : 1;
     robotImageElement.style.setProperty("--robot-scale", String(layoutConfig.robotScale));
     robotImageElement.style.setProperty("--robot-offset-y", `${layoutConfig.robotOffsetY}px`);
-    oilImageElement.style.setProperty("--oil-scale", String(layoutConfig.oilScale));
+    oilImageElement.style.setProperty("--oil-scale", String(layoutConfig.oilScale * oilScaleBoost));
     oilImageElement.style.setProperty("--oil-offset-y", `${layoutConfig.oilOffsetY}px`);
 }
 
