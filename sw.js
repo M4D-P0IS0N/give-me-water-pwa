@@ -1,9 +1,10 @@
-const CACHE_NAME = "givemewater-v16";
+const CACHE_NAME = "givemewater-v17";
 const STATIC_ASSETS = [
     "./",
     "./index.html",
     "./style.css",
     "./manifest.json",
+    "./Imagens/AppIcon.png",
     "./icon-192.png",
     "./icon-512.png",
     "./src/main.js",

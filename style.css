@@ -711,11 +711,11 @@ input[type="checkbox"] {
     }
 
     .mascot-panel {
-        min-height: 204px;
+        min-height: 214px;
     }
 
     .mascot-oil-ring {
-        width: min(100%, 154px);
+        width: min(100%, 166px);
     }
 
     .mascot-oil-ring-inner {
@@ -723,7 +723,7 @@ input[type="checkbox"] {
     }
 
     .mascot-oil {
-        width: min(100%, 126px);
+        width: min(100%, 132px);
         height: 94%;
     }
 }
