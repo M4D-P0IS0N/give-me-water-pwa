@@ -51,6 +51,15 @@ let lastMonthlySummarySignature = "";
 let profileSyncTimerId = null;
 let lastProfileSettingsSignature = "";
 
+function shouldShowDashboard(stateObject) {
+    const hasGoal = Number(stateObject.goal || 0) > 0;
+    const hasCloudBackedData = Boolean(stateObject.sync.userId) && (
+        (stateObject.history || []).length > 0 ||
+        (stateObject.monthlySummaries || []).length > 0
+    );
+    return hasGoal || hasCloudBackedData;
+}
+
 function getMonthlySummarySignature(stateObject) {
     return (stateObject.monthlySummaries || [])
         .map((summaryItem) => summaryItem.monthKey)
@@ -308,9 +317,7 @@ async function bootstrapApplication() {
         syncEngine,
         onUserChanged: () => {
             applyState({ ...appState });
-            if (appState.goal > 0) {
-                showScreen(domRefs, "dashboard");
-            }
+            showScreen(domRefs, shouldShowDashboard(appState) ? "dashboard" : "onboarding");
         },
         onSyncPushNeeded: syncPushSubscriptionState
     });
@@ -323,7 +330,7 @@ async function bootstrapApplication() {
 
     startReminderLoop(() => appState, serviceWorkerRegistration);
 
-    showScreen(domRefs, appState.goal > 0 ? "dashboard" : "onboarding");
+    showScreen(domRefs, shouldShowDashboard(appState) ? "dashboard" : "onboarding");
     renderApplication();
 
     await consumePendingQuickAddsFromServiceWorker({
