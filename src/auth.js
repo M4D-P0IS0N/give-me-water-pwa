@@ -1,30 +1,49 @@
 export function createAuthController(supabaseClient, onSessionChanged) {
     let unsubscribeListener = null;
+    const AUTH_URL_PARAM_NAMES = [
+        "code",
+        "token_hash",
+        "type",
+        "access_token",
+        "refresh_token",
+        "expires_in",
+        "expires_at",
+        "provider_token",
+        "provider_refresh_token",
+        "error",
+        "error_code",
+        "error_description",
+        "auth_callback"
+    ];
+
+    function parseAuthCallbackError() {
+        const currentUrl = new URL(window.location.href);
+        const rawErrorCode = currentUrl.searchParams.get("error_code") || "";
+        const rawErrorDescription = currentUrl.searchParams.get("error_description") || "";
+        if (!rawErrorCode && !rawErrorDescription) {
+            return null;
+        }
+
+        if (rawErrorCode === "otp_expired") {
+            return "Seu link/codigo expirou. Solicite um novo codigo e tente novamente.";
+        }
+
+        const decodedDescription = rawErrorDescription
+            ? decodeURIComponent(rawErrorDescription.replace(/\+/g, " "))
+            : "";
+
+        return decodedDescription || `Falha na autenticacao (${rawErrorCode || "erro desconhecido"}).`;
+    }
 
     function cleanupAuthParamsFromUrl() {
         const cleanUrl = new URL(window.location.href);
-        const queryParamsToRemove = [
-            "code",
-            "token_hash",
-            "type",
-            "access_token",
-            "refresh_token",
-            "expires_in",
-            "expires_at",
-            "provider_token",
-            "provider_refresh_token",
-            "error",
-            "error_code",
-            "error_description",
-            "auth_callback"
-        ];
-        queryParamsToRemove.forEach((paramName) => cleanUrl.searchParams.delete(paramName));
+        AUTH_URL_PARAM_NAMES.forEach((paramName) => cleanUrl.searchParams.delete(paramName));
 
         const rawHash = window.location.hash.startsWith("#")
             ? window.location.hash.slice(1)
             : window.location.hash;
         const hashParams = new URLSearchParams(rawHash);
-        queryParamsToRemove.forEach((paramName) => hashParams.delete(paramName));
+        AUTH_URL_PARAM_NAMES.forEach((paramName) => hashParams.delete(paramName));
         cleanUrl.hash = hashParams.toString() ? `#${hashParams.toString()}` : "";
 
         const nextUrl = cleanUrl.toString();
@@ -35,7 +54,7 @@ export function createAuthController(supabaseClient, onSessionChanged) {
 
     async function consumeAuthRedirectIfPresent() {
         if (!supabaseClient) {
-            return;
+            return { message: null };
         }
 
         const currentUrl = new URL(window.location.href);
@@ -50,6 +69,7 @@ export function createAuthController(supabaseClient, onSessionChanged) {
         const refreshToken = hashParams.get("refresh_token");
 
         let callbackHandled = false;
+        const callbackErrorMessage = parseAuthCallbackError();
 
         if (code) {
             callbackHandled = true;
@@ -77,9 +97,14 @@ export function createAuthController(supabaseClient, onSessionChanged) {
             }
         }
 
-        if (callbackHandled) {
+        const hasAuthArtifactsInUrl = AUTH_URL_PARAM_NAMES.some(
+            (paramName) => currentUrl.searchParams.has(paramName) || hashParams.has(paramName)
+        );
+        if (callbackHandled || hasAuthArtifactsInUrl) {
             cleanupAuthParamsFromUrl();
         }
+
+        return { message: callbackErrorMessage };
     }
 
     async function initialize() {
@@ -88,7 +113,10 @@ export function createAuthController(supabaseClient, onSessionChanged) {
             return;
         }
 
-        await consumeAuthRedirectIfPresent();
+        const callbackResult = await consumeAuthRedirectIfPresent();
+        if (callbackResult.message) {
+            console.warn(callbackResult.message);
+        }
 
         const {
             data: { session }
@@ -104,18 +132,16 @@ export function createAuthController(supabaseClient, onSessionChanged) {
         unsubscribeListener = authListener?.subscription || null;
     }
 
-    async function signInWithEmail(emailAddress) {
+    async function sendLoginCode(emailAddress) {
         if (!supabaseClient || !emailAddress) {
             return { success: false, message: "Supabase nao configurado ou email invalido." };
         }
 
         const cleanEmail = String(emailAddress).trim().toLowerCase();
-        const redirectUrl = new URL(`${window.location.origin}${window.location.pathname}`);
-        redirectUrl.searchParams.set("auth_callback", "1");
         const { error } = await supabaseClient.auth.signInWithOtp({
             email: cleanEmail,
             options: {
-                emailRedirectTo: redirectUrl.toString()
+                shouldCreateUser: true
             }
         });
 
@@ -124,7 +150,35 @@ export function createAuthController(supabaseClient, onSessionChanged) {
             return { success: false, message: error.message };
         }
 
-        return { success: true, message: "Link de acesso enviado por email." };
+        return {
+            success: true,
+            message: "Codigo enviado por email. Digite o codigo no app para sincronizar."
+        };
+    }
+
+    async function verifyLoginCode(emailAddress, otpCode) {
+        if (!supabaseClient || !emailAddress || !otpCode) {
+            return { success: false, message: "Informe email e codigo." };
+        }
+
+        const cleanEmail = String(emailAddress).trim().toLowerCase();
+        const cleanToken = String(otpCode).trim();
+        const { error } = await supabaseClient.auth.verifyOtp({
+            email: cleanEmail,
+            token: cleanToken,
+            type: "email"
+        });
+
+        if (error) {
+            console.error("Falha ao validar codigo OTP.", error);
+            return { success: false, message: error.message };
+        }
+
+        return { success: true, message: "Login concluido. Sincronizando dados..." };
+    }
+
+    async function signInWithEmail(emailAddress) {
+        return sendLoginCode(emailAddress);
     }
 
     async function signOut() {
@@ -150,6 +204,8 @@ export function createAuthController(supabaseClient, onSessionChanged) {
 
     return {
         initialize,
+        sendLoginCode,
+        verifyLoginCode,
         signInWithEmail,
         signOut,
         dispose

@@ -18,7 +18,7 @@ export function bindUiEvents({
     listenServiceWorkerMessages,
     getServiceWorkerRegistration
 }) {
-    async function triggerEmailSignIn(emailInputElement, statusOutputElement) {
+    async function triggerSendCode(emailInputElement, statusOutputElement) {
         const authController = getAuthController();
         if (!authController) {
             if (statusOutputElement) {
@@ -28,7 +28,27 @@ export function bindUiEvents({
             return;
         }
 
-        const result = await authController.signInWithEmail(emailInputElement?.value || "");
+        const result = await authController.sendLoginCode(emailInputElement?.value || "");
+        if (statusOutputElement) {
+            statusOutputElement.textContent = result.message;
+        }
+        domRefs.syncStatus.textContent = result.message;
+    }
+
+    async function triggerVerifyCode(emailInputElement, codeInputElement, statusOutputElement) {
+        const authController = getAuthController();
+        if (!authController) {
+            if (statusOutputElement) {
+                statusOutputElement.textContent = "Supabase nao configurado.";
+            }
+            domRefs.syncStatus.textContent = "Supabase nao configurado.";
+            return;
+        }
+
+        const result = await authController.verifyLoginCode(
+            emailInputElement?.value || "",
+            codeInputElement?.value || ""
+        );
         if (statusOutputElement) {
             statusOutputElement.textContent = result.message;
         }
@@ -54,8 +74,16 @@ export function bindUiEvents({
         }
     });
 
-    domRefs.controls.onboardingSignIn?.addEventListener("click", async () => {
-        await triggerEmailSignIn(domRefs.onboardingAuthEmailInput, domRefs.onboardingAuthStatus);
+    domRefs.controls.onboardingSendCode?.addEventListener("click", async () => {
+        await triggerSendCode(domRefs.onboardingAuthEmailInput, domRefs.onboardingAuthStatus);
+    });
+
+    domRefs.controls.onboardingVerifyCode?.addEventListener("click", async () => {
+        await triggerVerifyCode(
+            domRefs.onboardingAuthEmailInput,
+            domRefs.onboardingAuthCodeInput,
+            domRefs.onboardingAuthStatus
+        );
     });
 
     domRefs.controls.openSettings.addEventListener("click", () => {
@@ -100,8 +128,12 @@ export function bindUiEvents({
         startReminderLoop(() => getAppState(), getServiceWorkerRegistration());
     });
 
+    domRefs.controls.sendCode?.addEventListener("click", async () => {
+        await triggerSendCode(domRefs.authEmailInput);
+    });
+
     domRefs.controls.signIn.addEventListener("click", async () => {
-        await triggerEmailSignIn(domRefs.authEmailInput);
+        await triggerVerifyCode(domRefs.authEmailInput, domRefs.authCodeInput);
     });
 
     domRefs.controls.signOut.addEventListener("click", async () => {
