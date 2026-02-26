@@ -25,7 +25,7 @@ export function createAuthController(supabaseClient, onSessionChanged) {
         }
 
         if (rawErrorCode === "otp_expired") {
-            return "Seu link/codigo expirou. Solicite um novo codigo e tente novamente.";
+            return "Seu codigo expirou. Solicite um novo codigo e digite no app.";
         }
 
         const decodedDescription = rawErrorDescription
@@ -159,7 +159,7 @@ export function createAuthController(supabaseClient, onSessionChanged) {
 
         return {
             success: true,
-            message: "Codigo enviado por email. Digite o codigo no app para sincronizar."
+            message: "Codigo enviado por email. Nao abra o link: digite o codigo no app para sincronizar."
         };
     }
 
