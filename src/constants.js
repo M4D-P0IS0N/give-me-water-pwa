@@ -1,5 +1,6 @@
 export const STORAGE_KEY = "givemewater_state_v2";
 export const STATE_VERSION = 2;
+export const APP_VERSION = "v0.21.0";
 
 export const DRINKS = [
     { id: "water", name: "Agua", hydrationFactor: 1.0, icon: "💧" },

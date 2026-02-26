@@ -20,6 +20,7 @@ export function getDomRefs() {
         statCompletion: document.getElementById("stat-completion"),
         weeklyChart: document.getElementById("weekly-chart"),
         monthlyChart: document.getElementById("monthly-chart"),
+        appVersion: document.getElementById("app-version"),
         settingsForm: {
             goalOverride: document.getElementById("meta-override"),
             endOfDay: document.getElementById("end-of-day"),

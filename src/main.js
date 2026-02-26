@@ -6,7 +6,7 @@ import {
     consumePendingQuickAddsFromServiceWorker,
     parseQuickAddFromUrl
 } from "./appQuickAdd.js";
-import { AMOUNTS, DRINKS, LOCAL_EVENT_SOURCE } from "./constants.js";
+import { AMOUNTS, APP_VERSION, DRINKS, LOCAL_EVENT_SOURCE } from "./constants.js";
 import { renderMascotLevel, setupMascotMotion } from "./mascot.js";
 import {
     listenServiceWorkerMessages,
@@ -205,6 +205,14 @@ function updateStatusTexts() {
         : "Usuario: anonimo";
 }
 
+function renderVersionFooter() {
+    if (!domRefs.appVersion) {
+        return;
+    }
+
+    domRefs.appVersion.textContent = `Versao ${APP_VERSION}`;
+}
+
 function renderAnalyticsIfVisible() {
     if (!domRefs.screens.analytics || domRefs.screens.analytics.classList.contains("hidden")) {
         return;
@@ -222,6 +230,7 @@ function renderApplication() {
     renderMascotLevel(domRefs, appState);
     renderSettings(domRefs, appState);
     updateStatusTexts();
+    renderVersionFooter();
 
     renderDrinkTypes(domRefs, DRINKS, selectedDrinkId, (newDrinkId) => {
         selectedDrinkId = newDrinkId;
