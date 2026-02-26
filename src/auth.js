@@ -35,6 +35,12 @@ export function createAuthController(supabaseClient, onSessionChanged) {
         return decodedDescription || `Falha na autenticacao (${rawErrorCode || "erro desconhecido"}).`;
     }
 
+    function buildEmailRedirectUrl() {
+        const redirectUrl = new URL("./index.html", window.location.href);
+        redirectUrl.searchParams.set("auth_callback", "1");
+        return redirectUrl.toString();
+    }
+
     function cleanupAuthParamsFromUrl() {
         const cleanUrl = new URL(window.location.href);
         AUTH_URL_PARAM_NAMES.forEach((paramName) => cleanUrl.searchParams.delete(paramName));
@@ -141,7 +147,8 @@ export function createAuthController(supabaseClient, onSessionChanged) {
         const { error } = await supabaseClient.auth.signInWithOtp({
             email: cleanEmail,
             options: {
-                shouldCreateUser: true
+                shouldCreateUser: true,
+                emailRedirectTo: buildEmailRedirectUrl()
             }
         });
 
