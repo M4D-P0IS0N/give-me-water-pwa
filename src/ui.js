@@ -21,6 +21,7 @@ export function getDomRefs() {
         weeklyChart: document.getElementById("weekly-chart"),
         monthlyChart: document.getElementById("monthly-chart"),
         appVersion: document.getElementById("app-version"),
+        appSyncPill: document.getElementById("app-sync-pill"),
         settingsForm: {
             goalOverride: document.getElementById("meta-override"),
             endOfDay: document.getElementById("end-of-day"),

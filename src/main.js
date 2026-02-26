@@ -206,11 +206,25 @@ function updateStatusTexts() {
 }
 
 function renderVersionFooter() {
-    if (!domRefs.appVersion) {
+    if (!domRefs.appVersion || !domRefs.appSyncPill) {
         return;
     }
 
     domRefs.appVersion.textContent = `Versao ${APP_VERSION}`;
+    const hasCloud = Boolean(appState.sync.userId);
+    const pendingCount = Number(appState.sync.pendingCount || 0);
+    if (!hasCloud) {
+        domRefs.appSyncPill.textContent = "Sync local";
+        domRefs.appSyncPill.dataset.state = "local";
+        return;
+    }
+    if (pendingCount > 0) {
+        domRefs.appSyncPill.textContent = `Sync pendente (${pendingCount})`;
+        domRefs.appSyncPill.dataset.state = "syncing";
+        return;
+    }
+    domRefs.appSyncPill.textContent = "Sync cloud";
+    domRefs.appSyncPill.dataset.state = "cloud";
 }
 
 function renderAnalyticsIfVisible() {
