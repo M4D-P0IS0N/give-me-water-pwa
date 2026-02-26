@@ -165,22 +165,58 @@ export function createAuthController(supabaseClient, onSessionChanged) {
 
     async function verifyLoginCode(emailAddress, otpCode) {
         if (!supabaseClient || !emailAddress || !otpCode) {
-            return { success: false, message: "Informe email e codigo." };
+            return { success: false, message: "Informe email e codigo/link." };
         }
 
         const cleanEmail = String(emailAddress).trim().toLowerCase();
-        const cleanToken = String(otpCode).trim();
-        const { error } = await supabaseClient.auth.verifyOtp({
-            email: cleanEmail,
-            token: cleanToken,
-            type: "email"
-        });
+        const rawCredential = String(otpCode).trim();
+        let error = null;
+
+        if (rawCredential.startsWith("http://") || rawCredential.startsWith("https://")) {
+            try {
+                const parsedUrl = new URL(rawCredential);
+                const code = parsedUrl.searchParams.get("code");
+                const tokenHash = parsedUrl.searchParams.get("token_hash");
+                const tokenType = parsedUrl.searchParams.get("type") || "email";
+                const hashParams = new URLSearchParams(parsedUrl.hash.startsWith("#")
+                    ? parsedUrl.hash.slice(1)
+                    : parsedUrl.hash);
+                const accessToken = hashParams.get("access_token");
+                const refreshToken = hashParams.get("refresh_token");
+
+                if (code) {
+                    ({ error } = await supabaseClient.auth.exchangeCodeForSession(code));
+                } else if (tokenHash) {
+                    ({ error } = await supabaseClient.auth.verifyOtp({
+                        token_hash: tokenHash,
+                        type: tokenType
+                    }));
+                } else if (accessToken && refreshToken) {
+                    ({ error } = await supabaseClient.auth.setSession({
+                        access_token: accessToken,
+                        refresh_token: refreshToken
+                    }));
+                } else {
+                    return { success: false, message: "Link invalido. Cole o link completo do email." };
+                }
+            } catch {
+                return { success: false, message: "Formato invalido. Informe codigo ou link completo." };
+            }
+        } else {
+            const cleanToken = rawCredential;
+            ({ error } = await supabaseClient.auth.verifyOtp({
+                email: cleanEmail,
+                token: cleanToken,
+                type: "email"
+            }));
+        }
 
         if (error) {
-            console.error("Falha ao validar codigo OTP.", error);
+            console.error("Falha ao validar credencial OTP.", error);
             return { success: false, message: error.message };
         }
 
+        cleanupAuthParamsFromUrl();
         return { success: true, message: "Login concluido. Sincronizando dados..." };
     }
 

@@ -56,15 +56,15 @@
                     <summary>Ja possui cadastro?</summary>
                     <p class="onboarding-sync-helper">
                         Se voce ja sincronizou antes, entre com email + codigo para recuperar seus dados.
-                        Ignore o link do email e use somente o codigo dentro do app.
+                        Se seu email vier apenas com link, copie o link e cole no campo abaixo.
                     </p>
                     <div class="input-group">
                         <label for="onboarding-auth-email">Email da conta</label>
                         <input type="email" id="onboarding-auth-email" placeholder="voce@exemplo.com">
                     </div>
                     <div class="input-group">
-                        <label for="onboarding-auth-code">Codigo de 6 digitos</label>
-                        <input type="text" id="onboarding-auth-code" inputmode="numeric" maxlength="6" placeholder="000000">
+                        <label for="onboarding-auth-code">Codigo ou link do email</label>
+                        <input type="text" id="onboarding-auth-code" placeholder="000000 ou https://...">
                     </div>
                     <div class="button-row">
                         <button type="button" id="btn-onboarding-send-code" class="btn btn-secondary">Enviar codigo</button>
@@ -173,15 +173,15 @@
 
                 <div id="auth-anon-section">
                     <p class="status-text">
-                        Para sincronizar, use o codigo de 6 digitos recebido por email. Nao abra o link do email.
+                        Para sincronizar, use o codigo de 6 digitos. Se vier somente link no email, cole o link no campo abaixo.
                     </p>
                     <div class="input-group">
                         <label for="auth-email">Sincronizacao (email)</label>
                         <input type="email" id="auth-email" placeholder="voce@exemplo.com">
                     </div>
                     <div class="input-group">
-                        <label for="auth-code">Codigo de 6 digitos</label>
-                        <input type="text" id="auth-code" inputmode="numeric" maxlength="6" placeholder="000000">
+                        <label for="auth-code">Codigo ou link do email</label>
+                        <input type="text" id="auth-code" placeholder="000000 ou https://...">
                     </div>
                     <div class="button-row">
                         <button type="button" id="btn-send-code" class="btn btn-secondary">Enviar codigo</button>
