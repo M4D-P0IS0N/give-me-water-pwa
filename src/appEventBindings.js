@@ -1,5 +1,5 @@
 import { LOCAL_EVENT_SOURCE } from "./constants.js";
-import { requestNotificationPermission, startReminderLoop } from "./push.js";
+import { requestNotificationPermission, sendReminderNow, startReminderLoop } from "./push.js";
 import { showQuickAddSheet, showScreen } from "./ui.js";
 
 export function bindUiEvents({
@@ -126,6 +126,26 @@ export function bindUiEvents({
         domRefs.syncStatus.textContent = `Permissao de notificacao: ${permissionResult}`;
         await syncPushSubscriptionState();
         startReminderLoop(() => getAppState(), getServiceWorkerRegistration());
+    });
+
+    domRefs.controls.testNotificationNow?.addEventListener("click", async () => {
+        if (typeof Notification === "undefined") {
+            domRefs.syncStatus.textContent = "Notificacoes nao suportadas neste dispositivo.";
+            return;
+        }
+
+        if (Notification.permission !== "granted") {
+            domRefs.syncStatus.textContent = "Permissao de notificacao ainda nao concedida.";
+            return;
+        }
+
+        try {
+            await sendReminderNow(getServiceWorkerRegistration());
+            domRefs.syncStatus.textContent = "Notificacao de teste enviada.";
+        } catch (error) {
+            console.error("Falha ao enviar notificacao de teste.", error);
+            domRefs.syncStatus.textContent = "Falha ao enviar notificacao de teste.";
+        }
     });
 
     domRefs.controls.sendCode?.addEventListener("click", async () => {

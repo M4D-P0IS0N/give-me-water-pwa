@@ -38,6 +38,7 @@ export function getDomRefs() {
             openAnalytics: document.getElementById("btn-analytics"),
             backAnalytics: document.getElementById("btn-back-analytics"),
             requestNotificationPermission: document.getElementById("btn-notification-permission"),
+            testNotificationNow: document.getElementById("btn-notification-test"),
             onboardingSendCode: document.getElementById("btn-onboarding-send-code"),
             onboardingVerifyCode: document.getElementById("btn-onboarding-verify-code"),
             resetData: document.getElementById("btn-reset-data"),

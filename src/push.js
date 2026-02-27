@@ -53,6 +53,10 @@ async function showReminderNotification(swRegistration) {
     });
 }
 
+export async function sendReminderNow(swRegistration) {
+    await showReminderNotification(swRegistration);
+}
+
 export async function registerServiceWorker() {
     if (!("serviceWorker" in navigator)) {
         return null;
@@ -115,7 +119,7 @@ export function startReminderLoop(getState, swRegistration) {
         window.clearInterval(reminderIntervalId);
     }
 
-    reminderIntervalId = window.setInterval(async () => {
+    const tick = async () => {
         if (typeof Notification === "undefined") {
             return;
         }
@@ -148,7 +152,10 @@ export function startReminderLoop(getState, swRegistration) {
         } catch (error) {
             console.error("Falha ao exibir lembrete local.", error);
         }
-    }, 60 * 1000);
+    };
+
+    tick();
+    reminderIntervalId = window.setInterval(tick, 60 * 1000);
 }
 
 export function stopReminderLoop() {
