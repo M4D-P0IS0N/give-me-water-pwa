@@ -34,27 +34,33 @@
 
 ## 6) Push com actions (Android/desktop compativel)
 1. Solicitar permissao de notificacao.
-2. Disparar um lembrete (aguardar intervalo ou acionar via SW).
+2. Disparar um lembrete local (`Testar notificacao agora` em configuracoes).
 3. Usar acao `+250/+500/+750`.
 4. Confirmar que consumo entra no historico sem abrir manualmente o app.
 
-## 7) Fallback iOS
+## 7) Push server-side (app fechado)
+1. Configurar VAPID e deploy da Edge Function `send-reminders`.
+2. Configurar Cron para chamar a function.
+3. Fechar o app e aguardar janela/intervalo.
+4. Confirmar recebimento da notificacao com app em background/fechado.
+
+## 8) Fallback iOS
 1. Em iOS PWA instalado, tocar notificacao quando actions nao aparecerem.
 2. Confirmar abertura do quick add e registro de agua.
 
-## 8) Sync Supabase
+## 9) Sync Supabase
 1. Preencher `src/config.js` com `url` e `anonKey`.
 2. Aplicar `supabase/schema.sql` no projeto Supabase.
 3. Entrar por email no app.
 4. Registrar consumos em dois dispositivos.
 5. Confirmar convergencia sem duplicacao.
 
-## 9) Retencao mensal
+## 10) Retencao mensal
 1. Garantir dados em mes anterior (simulacao/manual).
 2. Virar para novo mes.
 3. Confirmar criacao de resumo mensal e limpeza de eventos detalhados antigos.
 
-## 10) PWA offline/install
+## 11) PWA offline/install
 1. Verificar instalacao do PWA.
 2. Fechar rede.
 3. Reabrir app e registrar consumo.

@@ -5,6 +5,7 @@ Escopo revisado:
 - `src/*.js`
 - `supabase/schema.sql`
 - `supabase/functions/monthly-retention/index.ts`
+- `supabase/functions/send-reminders/index.ts`
 
 ## Resultado rapido
 - Nenhum segredo de alto risco foi encontrado no cliente.
@@ -27,6 +28,12 @@ Escopo revisado:
 3. Uso de `innerHTML` em alguns pontos de UI.
    - Impacto atual: baixo (dados vindos de listas internas e numeros).
    - Acao: se futuramente aceitar texto livre do usuario, trocar para `textContent`.
+4. Edge Function de push depende de chave privada VAPID.
+   - Impacto: alto se vazada.
+   - Acao: manter `VAPID_PRIVATE_KEY` apenas em `secrets` da function; nunca em cliente/repo.
+5. Edge Function `send-reminders` pode ser chamada externamente.
+   - Impacto: medio/alto (abuso de envio) se endpoint ficar aberto.
+   - Acao: exigir `CRON_SECRET` no header `Authorization: Bearer ...`.
 
 ## Checklist recomendado antes do publico
 1. Confirmar `enable_anonymous_sign_ins = false` no Supabase.
@@ -34,3 +41,4 @@ Escopo revisado:
 3. Revisar limites de Auth e API no projeto Supabase.
 4. Configurar monitoramento de erros no navegador e Edge Functions.
 5. Testar fluxo completo com conta nova e sem cache do navegador.
+6. Confirmar `CRON_SECRET` configurado e cron chamando apenas endpoint autenticado.

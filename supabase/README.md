@@ -1,51 +1,98 @@
-# Supabase Setup - Modo Simples (igual ao App de Custos)
+# Supabase Setup - Sync + Push Server-side
 
-Este projeto agora funciona no mesmo modelo simples:
-- `URL + ANON KEY` no cliente;
-- login por email no app;
-- sync via RLS;
-- retenção mensal sincronizada pelo próprio cliente autenticado.
+Este projeto usa Supabase para:
+- autenticacao por email (OTP);
+- sincronizacao de dados (`profiles`, `hydration_events`, `monthly_summaries`);
+- push notifications com envio server-side (`send-reminders`).
 
-Nao precisa `functions invoke` para o app funcionar.
+## 1) Auth e URLs
+1. Em `Authentication > Providers`, habilite Email.
+2. Em `Authentication > URL Configuration`:
+   - `Site URL`: `https://m4d-p0is0n.github.io/give-me-water-pwa/`
+   - `Additional Redirect URLs`:
+     - `https://m4d-p0is0n.github.io/give-me-water-pwa/`
+     - `https://m4d-p0is0n.github.io/give-me-water-pwa/index.html`
 
-## 1) Criar projeto e habilitar Auth
-1. Crie o projeto no Supabase.
-2. Em `Authentication > Providers`, habilite Email.
-3. Em `Authentication > URL Configuration`, adicione sua URL local (ex: `http://localhost:5500`) em `Site URL` e `Redirect URLs`.
-
-## 2) Executar schema
+## 2) Schema
 1. Abra `SQL Editor`.
-2. Execute:
-   - `supabase/schema.sql`
+2. Execute `supabase/schema.sql`.
 3. Confirme as tabelas:
    - `profiles`
    - `hydration_events`
    - `monthly_summaries`
    - `push_subscriptions`
+   - `push_reminder_dispatches`
 
-## 3) Configurar cliente do app
-Edite:
-- `src/config.js`
+## 3) Configuracao do cliente
+Edite `src/config.js`:
 
-Preencha:
 ```js
 export const SUPABASE_CONFIG = {
-  url: "https://SEU_PROJECT_REF.supabase.co",
-  anonKey: "SUA_ANON_KEY",
-  vapidPublicKey: ""
+    url: "https://SEU_PROJECT_REF.supabase.co",
+    anonKey: "SUA_ANON_KEY",
+    vapidPublicKey: "SUA_VAPID_PUBLIC_KEY"
 };
 ```
 
-## 4) Validar conexão no app
-1. Abra o app.
-2. Em `Configuracoes`, informe email e clique `Entrar`.
-3. Abra o link recebido no email.
-4. Registre um consumo.
-5. No Supabase Table Editor, valide insercao em `hydration_events`.
+`vapidPublicKey` precisa estar preenchida para registrar push subscription no navegador.
 
-## 5) Realtime (opcional, recomendado)
-Em `Database > Replication`, habilite realtime para `hydration_events`.
+## 4) Gerar chaves VAPID
+Com Node:
 
-## 6) Edge Function (opcional, avancado)
-O arquivo `supabase/functions/monthly-retention/index.ts` continua no repo como opcao avancada.
-Para o fluxo comum do app, nao e necessario deploy/invoke dessa function.
+```powershell
+npx web-push generate-vapid-keys
+```
+
+Guarde:
+- Public Key -> vai para `src/config.js` (`vapidPublicKey`)
+- Private Key -> vai para secret da Edge Function
+
+## 5) Deploy da Edge Function de lembretes
+Função:
+- `supabase/functions/send-reminders/index.ts`
+
+Deploy:
+
+```powershell
+npx supabase@latest functions deploy send-reminders --project-ref SEU_PROJECT_REF
+```
+
+Defina secrets:
+
+```powershell
+npx supabase@latest secrets set VAPID_PUBLIC_KEY=... VAPID_PRIVATE_KEY=... VAPID_SUBJECT=mailto:voce@dominio.com CRON_SECRET=UM_SEGREDO_FORTE --project-ref SEU_PROJECT_REF
+```
+
+Se o seu ambiente nao expor automaticamente `SUPABASE_SERVICE_ROLE_KEY`, configure tambem:
+
+```powershell
+npx supabase@latest secrets set GMW_SUPABASE_SERVICE_ROLE_KEY=... GMW_SUPABASE_URL=https://SEU_PROJECT_REF.supabase.co --project-ref SEU_PROJECT_REF
+```
+
+## 6) Agendar envio (Cron)
+Use `Integrations > Cron` no dashboard Supabase:
+- Schedule: `*/10 * * * *` (a cada 10 minutos)
+- Method: `POST`
+- URL: `https://SEU_PROJECT_REF.functions.supabase.co/send-reminders`
+- Header:
+  - `Authorization: Bearer SEU_CRON_SECRET`
+
+A função respeita por usuario:
+- `notificationsEnabled`
+- `reminderStartTime` / `reminderEndTime`
+- `intervalMinutes`
+- `goal` (nao envia se meta ja foi batida)
+- deduplicacao por bucket (tabela `push_reminder_dispatches`)
+
+## 7) Testes rapidos
+1. No app (iOS/desktop), conceda permissao de notificacao.
+2. Em Configuracoes, use `Testar notificacao agora` (teste local imediato).
+3. Registre push subscription (login + permissao).
+4. Teste server-side:
+
+```powershell
+$headers = @{ Authorization = "Bearer SEU_CRON_SECRET"; "Content-Type" = "application/json" }
+Invoke-RestMethod -Method Post -Uri "https://SEU_PROJECT_REF.functions.supabase.co/send-reminders" -Headers $headers -Body '{"dryRun":true}'
+```
+
+`dryRun:true` nao envia push real, so retorna elegibilidade.

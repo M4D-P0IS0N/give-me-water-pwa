@@ -49,10 +49,22 @@ create table if not exists public.push_subscriptions (
     updated_at timestamptz not null default now()
 );
 
+create table if not exists public.push_reminder_dispatches (
+    id uuid primary key default gen_random_uuid(),
+    user_id uuid not null references auth.users(id) on delete cascade,
+    bucket_key text not null,
+    created_at timestamptz not null default now(),
+    unique (user_id, bucket_key)
+);
+
+create index if not exists idx_push_reminder_dispatches_user_created
+    on public.push_reminder_dispatches(user_id, created_at desc);
+
 alter table public.profiles enable row level security;
 alter table public.hydration_events enable row level security;
 alter table public.monthly_summaries enable row level security;
 alter table public.push_subscriptions enable row level security;
+alter table public.push_reminder_dispatches enable row level security;
 
 drop policy if exists "profiles_select_own" on public.profiles;
 create policy "profiles_select_own"

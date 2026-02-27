@@ -20,7 +20,7 @@ PWA de hidratacao com:
 2. Preencha:
    - `url`
    - `anonKey`
-   - `vapidPublicKey` (opcional, para push web real)
+   - `vapidPublicKey` (obrigatorio para push server-side)
 3. Execute o schema SQL:
    - `supabase/schema.sql`
 4. Siga os passos completos em:
@@ -29,8 +29,8 @@ PWA de hidratacao com:
 Com `url`/`anonKey` vazios em `src/config.js`, o app continua em modo local-only.
 
 ## Onboarding e sincronizacao entre dispositivos
-- Em dispositivo novo, voce pode clicar em `Entrar e puxar dados da nuvem` no onboarding.
-- Apos login por email, o app puxa automaticamente:
+- Em dispositivo novo, abra `Ja possui cadastro?` no onboarding.
+- Faca login por email (OTP) e o app puxa automaticamente:
   - meta (`goal`)
   - perfil do onboarding
   - configuracoes principais
@@ -48,6 +48,8 @@ powershell -ExecutionPolicy Bypass -File .\tools\normalize-mascot-assets.ps1 -Pr
 ## Observacoes de push
 - Android/desktop: usa acoes de notificacao (`+250`, `+500`, `+750`).
 - iOS fallback: toque abre quick add no app quando actions nao estiverem disponiveis.
+- Lembretes com app fechado exigem push server-side (Edge Function `send-reminders` + cron).
+- Setup completo: `supabase/README.md`.
 
 ## Checklist de testes
 - `TESTING_CHECKLIST.md`
